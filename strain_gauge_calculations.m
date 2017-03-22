@@ -1,10 +1,10 @@
 % Målinger og konstanter
 L = 40;         % Længde af aluminiumsstang [mm]
-h = 5;         % Højde af aluminiumsstang [mm]
+h = 10;         % Højde af aluminiumsstang [mm]
 b = 0.5;        % Bredde af aluminiumsstang [mm]
 m_sg = 0.020;    % Masse af strain gauge + lod [kg]
 
-E = 68000;      % Elasticitetskoefficient for aluminium [N/mm^2]
+E = 210000;      % Elasticitetskoefficient for aluminium [N/mm^2]
 GF = 2.15;         % Gainfactor (aflæses i datablad)
 
 % Bestemt i matlab filen carmeasurements.m:
@@ -36,3 +36,6 @@ L_sg = 6;              % Længde af strain gauge [mm]
 % Bestemmer forlængelse af strain gauge
 delta_L_sg = Epsilon * L_sg % Forlængelse af strain gauge [mm]
 
+
+% Bestemmer ændring i modstand
+DeltaR = GF * Epsilon * 120
