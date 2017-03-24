@@ -35,7 +35,7 @@ RJMP setup ; On reset
 
 .ORG 0x2A
 setup:
-	SSP R16, RAMEND
+	SSP R16, RAMEND ; Set up stack pointer
 	
 	; Set RED_LED as output and low
 	SBI RED_LED_DDR, RED_LED
