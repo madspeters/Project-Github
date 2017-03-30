@@ -1,8 +1,9 @@
 .INCLUDE "m32Adef.inc"
 .EQU F_CPU = 16000000
 
-
-; Setting up "variables"
+;-------------------;
+;  PIN DEFINITIONS  ;
+;-------------------;
 .EQU RED_LED_DDR = DDRB
 .EQU RED_LED_PORT = PORTB
 .EQU RED_LED = PINB1
@@ -26,6 +27,11 @@
 .EQU DISTANCE_PORT = PORTD
 .EQU DISTANCE = PIND2
 
+.EQU MOTOR_DDR = DDRD
+.EQU MOTOR_PIN = PIND
+.EQU MOTOR_PORT = PORTD
+.EQU MOTOR = PIND7
+
 .MACRO SSP
 	LDI @0, low(@1)
 	OUT SPL, @0
@@ -33,10 +39,18 @@
 	OUT SPH, @0
 .ENDMACRO
 
+
+;-------------------;
+;   VECTOR TABLE    ;
+;-------------------;
 .ORG 0x00
-RJMP setup ; On reset
+RJMP setup ; Reset
 
 .ORG 0x2A
+
+;-------------------;
+;	SETUP       ;
+;-------------------;
 setup:
 	SSP R16, RAMEND
 	
@@ -60,36 +74,50 @@ setup:
 	CBI STRAIN_GAUGE_DDR, STRAIN_GAUGE
 	CBI STRAIN_GAUGE_PORT, STRAIN_GAUGE
 	
+	; Set MOTOR as output and low
+	SBI MOTOR_DDR, MOTOR
+	CBI MOTOR_PORT, MOTOR
+	
+	; Set up PWM on OC2
+	;-------------------------------------------------------;
+	; Bits of the timer/counter control register (TCCR): 	;
+	; FOC2 WGM20 COM21 COM20 WGM21 CS22 CS21 CS20			;
+	;  7     6     5     4     3     2    1    0			;
+	;-------------------------------------------------------;
+	; Prescaler set for 1 MHz clock (= 64), giving 15 kHz PWM
+	; Set CS22:CS21:CS20 to 1:1:1 when at 16MHz for 1024 prescaler
+	LDI R16, 0b01101100 ; Timer/Counter register
+	OUT TCCR2, R16
+	LDI R16, 90 ; Output compare register (duty cycle = 35%)
+	OUT OCR2, R16
+	
 	RJMP main
-	
+
+
+;-------------------;
+;     MAIN LOOP	    ;
+;-------------------;
 main:
-	; Read FINISH_LINE sensor and if high, set RED_LED high
-	;SBIC FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is clear (low)
-	;SBI RED_LED_PORT, RED_LED
-	
-	;SBIS FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is set (high)
-	;CBI RED_LED_PORT, RED_LED
-	
-	; Read DISTANCE sensor and if high, set GREEN_LED high
-	;SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
-	;SBI GREEN_LED_PORT, GREEN_LED
-	
-	;SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
-	;CBI GREEN_LED_PORT, GREEN_LED
-	
-	SBI GREEN_LED_PORT, GREEN_LED
-	CBI RED_LED_PORT, RED_LED
-	
-	RCALL delay_1sec
-	
-	CBI GREEN_LED_PORT, GREEN_LED
+	; Read FINISH_LINE sensor and if low (finish line detected), set RED_LED high
+	SBIS FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is clear (low)
 	SBI RED_LED_PORT, RED_LED
 	
-	RCALL delay_1sec
+	SBIC FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is set (high)
+	CBI RED_LED_PORT, RED_LED
+	
+	; Read DISTANCE sensor and if low (active), set GREEN_LED high
+	SBIS DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
+	SBI GREEN_LED_PORT, GREEN_LED
+	
+	SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
+	CBI GREEN_LED_PORT, GREEN_LED
 	
 	RJMP main
 	
 	
+;-------------------;
+; DELAY SUB-ROUTINE ;
+;-------------------;
 delay_1sec:
 		LDI R23, 4 ;Load 61 into R23 (16 MHz = 61 loops, 1 MHz = 4 loops)
 		outer_loop: 
