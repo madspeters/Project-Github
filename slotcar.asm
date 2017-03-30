@@ -44,18 +44,16 @@
 	OUT OCR2, @0
 .ENDMACRO
 
-
 ;-------------------;
 ;   VECTOR TABLE    ;
 ;-------------------;
 .ORG 0x00
 RJMP setup ; Reset
 
-.ORG 0x2A
-
 ;-------------------;
 ;	SETUP       ;
 ;-------------------;
+.ORG 0x2A
 setup:
 	SSP R16, RAMEND
 	
@@ -99,7 +97,6 @@ setup:
 	
 	RJMP main
 
-
 ;-------------------;
 ;     MAIN LOOP     ;
 ;-------------------;
@@ -119,7 +116,6 @@ main:
 	CBI GREEN_LED_PORT, GREEN_LED
 	
 	RJMP main
-	
 	
 ;-------------------;
 ; DELAY SUB-ROUTINE ;
