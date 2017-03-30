@@ -39,6 +39,11 @@
 	OUT SPH, @0
 .ENDMACRO
 
+.MACRO MOTOR_SPEED
+	LDI @0, @1
+	OUT OCR2, @0
+.ENDMACRO
+
 
 ;-------------------;
 ;   VECTOR TABLE    ;
@@ -81,21 +86,22 @@ setup:
 	; Set up PWM on OC2
 	;-------------------------------------------------------;
 	; Bits of the timer/counter control register (TCCR): 	;
-	; FOC2 WGM20 COM21 COM20 WGM21 CS22 CS21 CS20			;
-	;  7     6     5     4     3     2    1    0			;
+	; FOC2 WGM20 COM21 COM20 WGM21 CS22 CS21 CS20		;
+	;  7     6     5     4     3     2    1    0		;
 	;-------------------------------------------------------;
 	; Prescaler set for 1 MHz clock (= 64), giving 15 kHz PWM
 	; Set CS22:CS21:CS20 to 1:1:1 when at 16MHz for 1024 prescaler
-	LDI R16, 0b01101100 ; Timer/Counter register
+	LDI R16, 0b01101100
 	OUT TCCR2, R16
-	LDI R16, 90 ; Output compare register (duty cycle = 35%)
-	OUT OCR2, R16
+	
+	; Set MOTOR_SPEED to 90 (duty cycle = 90/256 = 35%)
+	MOTOR_SPEED R16, 90
 	
 	RJMP main
 
 
 ;-------------------;
-;     MAIN LOOP	    ;
+;     MAIN LOOP     ;
 ;-------------------;
 main:
 	; Read FINISH_LINE sensor and if low (finish line detected), set RED_LED high
