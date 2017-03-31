@@ -108,6 +108,8 @@ setup:
 	
 	; Enable global interrupts
 	;SEI
+	;LDI R16, 0x00
+	;OUT GICR, R16
 	;LDI R16, 0b00000001 ; Set INT0 to trigger on any logical change
 	;OUT MCUCR, R16
 	
