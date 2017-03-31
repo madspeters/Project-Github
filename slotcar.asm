@@ -44,14 +44,25 @@
 	OUT OCR2, @0
 .ENDMACRO
 
+.MACRO READ_ADC
+	IN @0, ADCL
+	IN @1, ADCH
+.ENDMACRO
+
 ;-------------------;
 ;   VECTOR TABLE    ;
 ;-------------------;
 .ORG 0x00
 RJMP setup ; Reset
 
+;.ORG 0x02
+;RJMP distance_interrupt ; Interrupt on INT0 (PD2)
+
+;.ORG 0x04
+;RJMP finish_line_interrupt ; Intterupt on INT1 (PD3)
+
 ;-------------------;
-;	SETUP       ;
+;	SETUP	    ;
 ;-------------------;
 .ORG 0x2A
 setup:
@@ -95,10 +106,37 @@ setup:
 	; Set MOTOR_SPEED to 90 (duty cycle = 90/256 = 35%)
 	MOTOR_SPEED R16, 90
 	
+	; Enable global interrupts
+	;SEI
+	;LDI R16, 0b00000001 ; Set INT0 to trigger on any logical change
+	;OUT MCUCR, R16
+	
+	; Set up ADC
+	;--------------------------------------------;
+	; REFS1 REFS0 ADLAR MUX4 MUX3 MUX2 MUX1 MUX0 ;
+    	;   7     6     5    4    3    2    1    0   ;
+    	;--------------------------------------------;
+	LDI R16, 0b00000000 ; AREF, no left adjust, ADC0
+	OUT ADMUX, R16
+	
+	;---------------------------------------------;
+	; ADEN ADSC ADATE ADIF ADIE ADPS2 ADPS1 ADPS0 ;
+	;  7    6     5    4    3     2     1     0   ;
+	;---------------------------------------------;
+	LDI R16, 0b11100011 ; Enable, start conversion, auto-trigger, prescaler = 8
+	OUT ADCSRA, R16
+	
+	;-------------------;
+	; ADTS2 ADTS1 ADTS0 ;
+	;   7     6     5   ;
+	;-------------------;
+	LDI R16, 0b00000000 ; Set trigger-source to free running mode
+	OUT SFIOR, R16
+	
 	RJMP main
 
 ;-------------------;
-;     MAIN LOOP     ;
+;     MAIN LOOP	    ;
 ;-------------------;
 main:
 	; Read FINISH_LINE sensor and if low (finish line detected), set RED_LED high
@@ -113,22 +151,53 @@ main:
 	SBI GREEN_LED_PORT, GREEN_LED
 	
 	SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
-	CBI GREEN_LED_PORT, GREEN_LED
+	CBI GREEN_LED_PORT, GREEN_LED	
 	
 	RJMP main
 	
+
+;-------------------;
+;    INTERRUPTS     ;
+;-------------------;
+
+;finish_line_interrupt:
+;	SBIS RED_LED_PORT, RED_LED
+;	RJMP red_on
+;	RJMP red_off
+;
+;	red_on:
+;		SBI RED_LED_PORT, RED_LED
+;		RETI
+;		
+;	red_off:
+;		CBI RED_LED_PORT, RED_LED
+;		RETI
+
+;distance_interrupt:
+;	SBIS GREEN_LED_PORT, GREEN_LED
+;	RJMP green_on
+;	RJMP green_off
+;	
+;	green_on:
+;		SBI GREEN_LED_PORT, GREEN_LED
+;		RETI
+;		
+;	green_off:
+;		CBI RED_LED_PORT, RED_LED
+;		RETI	
+
 ;-------------------;
 ; DELAY SUB-ROUTINE ;
 ;-------------------;
 delay_1sec:
-		LDI R23, 4 ;Load 61 into R23 (16 MHz = 61 loops, 1 MHz = 4 loops)
-		outer_loop: 
-			LDI R24, low(65535) ;Clear R24 and R25 to use for a 16-bit word
-			LDI R25, high(65535)
-			inner_loop: ; 4 instructions per loop if no overflow
-				SBIW R25:R24, 1 ;Subtract 1 from 16-bit word in R25:R24
-				BRNE inner_loop ;Unless R25:R24 overflows, go back to inner_loop
-		
-		DEC R23 ;Decrement R23
-		BRNE outer_loop ;Unless R23 overflows go back to outer_loop
+	LDI R23, 4 ;Load 61 into R23 (16 MHz = 61 loops, 1 MHz = 4 loops)
+	outer_loop: 
+		LDI R24, low(65535) ;Clear R24 and R25 to use for a 16-bit word
+		LDI R25, high(65535)
+		inner_loop: ; 4 instructions per loop if no overflow
+			SBIW R25:R24, 1 ;Subtract 1 from 16-bit word in R25:R24
+			BRNE inner_loop ;Unless R25:R24 overflows, go back to inner_loop
+	
+	DEC R23 ;Decrement R23
+	BRNE outer_loop ;Unless R23 overflows go back to outer_loop
 RET
