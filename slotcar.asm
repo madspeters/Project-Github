@@ -58,8 +58,8 @@ RJMP setup ; Reset
 ;.ORG 0x02
 ;RJMP distance_interrupt ; Interrupt on INT0 (PD2)
 
-;.ORG 0x04
-;RJMP finish_line_interrupt ; Intterupt on INT1 (PD3)
+.ORG 0x04
+RJMP finish_line_interrupt ; Intterupt on INT1 (PD3)
 
 ;-------------------;
 ;	SETUP	    ;
@@ -107,11 +107,11 @@ setup:
 	MOTOR_SPEED R16, 90
 	
 	; Enable global interrupts
-	;SEI
-	;LDI R16, 0x00
-	;OUT GICR, R16
-	;LDI R16, 0b00000001 ; Set INT0 to trigger on any logical change
-	;OUT MCUCR, R16
+	SEI
+	LDI R16, 0x00
+	OUT GICR, R16
+	LDI R16, 0b00000001 ; Set INT0 to trigger on any logical change
+	OUT MCUCR, R16
 	
 	; Set up ADC
 	;--------------------------------------------;
@@ -134,6 +134,8 @@ setup:
 	;-------------------;
 	LDI R16, 0b00000000 ; Set trigger-source to free running mode
 	OUT SFIOR, R16
+	LDI R20, 0x20
+	LDI R21, 0x5
 	
 	RJMP main
 
@@ -142,19 +144,20 @@ setup:
 ;-------------------;
 main:
 	; Read FINISH_LINE sensor and if low (finish line detected), set RED_LED high
-	SBIS FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is clear (low)
-	SBI RED_LED_PORT, RED_LED
+	;SBIS FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is clear (low)
+	;SBI RED_LED_PORT, RED_LED
 	
-	SBIC FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is set (high)
-	CBI RED_LED_PORT, RED_LED
+	;SBIC FINISH_LINE_PIN, FINISH_LINE ; Skip next instruction if bit is set (high)
+	;CBI RED_LED_PORT, RED_LED
 	
 	; Read DISTANCE sensor and if low (active), set GREEN_LED high
-	SBIS DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
-	SBI GREEN_LED_PORT, GREEN_LED
+	;SBIS DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
+	;SBI GREEN_LED_PORT, GREEN_LED
 	
-	SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
-	CBI GREEN_LED_PORT, GREEN_LED	
+	;SBIC DISTANCE_PIN, DISTANCE ; Skip next instruction if bit is clear (low)
+	;CBI GREEN_LED_PORT, GREEN_LED	
 	
+	MOTORSPEED R16, R20	
 	RJMP main
 	
 
@@ -162,7 +165,11 @@ main:
 ;    INTERRUPTS     ;
 ;-------------------;
 
-;finish_line_interrupt:
+finish_line_interrupt:
+	ADD R20, R21
+	RETI
+
+
 ;	SBIS RED_LED_PORT, RED_LED
 ;	RJMP red_on
 ;	RJMP red_off
