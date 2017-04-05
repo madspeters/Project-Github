@@ -38,14 +38,18 @@ Dialog::~Dialog()
 // Når startknappen klikkes
 void Dialog::on_Start_clicked()
 {
-    serial->write("60");
+    char data[1];
+    data[0] = '60';
+    serial->write(data);
 
 }
 
 // Når stopknappen klikkes
 void Dialog::on_Stop_clicked()
 {
-    serial->write("0x11");
+    char data[1];
+    data[0] = '0';
+    serial->write(data);
 }
 
 
