@@ -1,6 +1,8 @@
 .INCLUDE "m32Adef.inc"
 .EQU F_CPU = 16000000
 
+; TEST TEST TEST KOMMENTAR :)
+
 ;-------------------;
 ;  PIN DEFINITIONS  ;
 ;-------------------;
