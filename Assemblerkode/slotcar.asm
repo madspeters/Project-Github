@@ -2,6 +2,7 @@
 .EQU F_CPU = 16000000
 
 ; TEST TEST TEST KOMMENTAR :)
+; Test kommentar2
 
 ;-------------------;
 ;  PIN DEFINITIONS  ;
