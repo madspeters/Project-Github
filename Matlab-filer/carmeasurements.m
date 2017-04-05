@@ -16,28 +16,29 @@ g = 9.82;                  % tyngdeacceleration (m/s^2)
 theta = deg2rad(85);       % vinkel(rad), hvor bilen falder ned
 F_down = 0.103*g;            % downforce calculator: http://www.scalextric-car.co.uk/Parts/Magnetraction/Magnet_Downforce_Calculator.htm
 F_t = m*g;                 % Tyngdekraft
-F_ty = F_t * cos(theta);   % Tyngdekraft y-komposant
+F_ty = F_t  * cos(theta);   % Tyngdekraft y-komposant
 F_tx = F_t * sin(theta);   % Tyngdekraft x-komposant
 
 syms my
 
 F_n = F_ty + F_down;       % Normalkraft
-F_gnid = my * F_n;         % Gnidningskraft
+F_gnid = my * F_n;         % Gnidningskraft (Gnidningskraft ved vinkel)
 
-my = solve(F_gnid==F_tx,my); % Gnidningskoefficient
+my = solve(F_gnid==F_tx,my) % Gnidningskoefficient
 
 % Bestemmer maks hastighed i lille og stort sving
 syms v
 F_cenlille = (m*v^2)/r_lille;    % Centripetalkraft lille radius
 F_censtor = (m*v^2)/r_stor;    % Centripetalkraft lille radius
-F_gnid = m*g*my;
+
+F_gnid = my*(F_t+F_down);  % Gnidningskraft uden vinkel
 
 
-v_maxlille = solve(F_cenlille == F_gnid,v);
-v_maxstor = solve(F_censtor == F_gnid,v);
+v_maxlille = double(solve(F_cenlille == F_gnid,v));
+v_maxstor = double(solve(F_censtor == F_gnid,v));
 
 kphlille = double(3.6*v_maxlille(2));       % Positiv max-hastighed
-kphstor = double(3.6*v_maxstor(2));         % Positiv max-hastighed
+kphstor = double(3.6*v_maxstor(2));        % Positiv max-hastighed
 
 % Bestemmer acceleration i inder og yder sving til beregning af strain
 % gauge. Ved denne beregninger antager vi at vi ikke kan se forskel på
@@ -45,9 +46,9 @@ kphstor = double(3.6*v_maxstor(2));         % Positiv max-hastighed
 % til at bestmeme accelerationen i ydersvinget
 
 a_cen_lille = double(v_maxlille(2)^2/r_lille)      % Max acceleration i indersving
-a_cen_stor = double(v_maxlille(2)^2/r_stor)        % Acceleration med max hastighed i indersving
+a_cen_stor = double(v_maxstor(2)^2/r_stor)        % Acceleration med max hastighed i indersving i ydersving
 
 
 
-
+ 
 
