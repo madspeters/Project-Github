@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.6  C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm Wed Apr 05 00:07:49 2017
+AVRASM ver. 2.2.6  C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm Mon Apr 03 22:19:40 2017
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
-C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
+C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
-C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
+C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc'
                                  
                                  .include "m32adef.inc" ; The ATMEGA32A Microcontroller
                                  
@@ -890,42 +890,44 @@ C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm(1): Including
 000039 b909                      		 OUT UBRRL, R16 
 00003a 9a59                      		 SBI UCSRA, U2X		;bruges til 1MHz baudrate
                                  
-                                 Main:	/*
-                                 		in R17, PINC
-                                 		RCall Transmit
-                                 		 
-                                 		COM R17
-                                 		OUT PORTB, R17
-                                 		RCALL delay_1sec
-                                 		rjmp Main
-                                 		*/
+                                 Main:	
+                                 		
                                  
-00003b d002                      		RCALL recieve
-00003c bb18                      		OUT PORTB, R17
-00003d cffd                      		RJMP Main
+                                 
+                                 		;DI R17, 'S'
+                                 		;SBIS PINC, 2
+                                 		;RCALL transmit
+00003b d00b                      		RCALL delay_1sec
+00003c d002                      		RCALL recieve
+00003d bb18                      		OUT PORTB, R17
+                                 
+00003e cffc                      		rjmp Main
+                                 
                                  Recieve:
-00003e 9b5f                      		SBIS UCSRA, RXC
-00003f 9508                      		ret 
-000040 b11c                      		IN	R17, UDR
-000041 9508                      		RET
+00003f 9b5f                      		SBIS UCSRA, RXC
+000040 9508                      		ret 
+000041 b11c                      		IN	R17, UDR
+000042 9508                      		RET
                                  
                                  Transmit:
-000042 9b5d                      		SBIS UCSRA, UDRE	;Is UDR empty?
-000043 cffe                      		RJMP Transmit		;if not, wait some more
-000044 b91c                      		OUT  UDR, R17		;Send R17 to UDR
-000045 9508                      		RET
+000043 9b5d                      		SBIS UCSRA, UDRE	;Is UDR empty?
+000044 cffe                      		RJMP Transmit		;if not, wait some more
+000045 b91c                      		OUT  UDR, R17		;Send R17 to UDR
+000046 9508                      		RET
                                  
                                  delay_1sec:
-000046 e074                      	LDI R23, 4 ;Load 61 into R23 (16 MHz = 61 loops, 1 MHz = 4 loops)
+000047 e074                      	LDI R23, 4 ;Load 61 into R23 (16 MHz = 61 loops, 1 MHz = 4 loops)
                                  	outer_loop: 
-000047 ef8f                      		LDI R24, low(65535) ;Clear R24 and R25 to use for a 16-bit word
-000048 ef9f                      		LDI R25, high(65535)
+000048 ef8f                      		LDI R24, low(65535) ;Clear R24 and R25 to use for a 16-bit word
+000049 ef9f                      		LDI R25, high(65535)
                                  		inner_loop: ; 4 instructions per loop if no overflow
-000049 9701                      			SBIW R25:R24, 1 ;Subtract 1 from 16-bit word in R25:R24
-00004a f7f1                      			BRNE inner_loop ;Unless R25:R24 overflows, go back to inner_loop
+00004a 9701                      			SBIW R25:R24, 1 ;Subtract 1 from 16-bit word in R25:R24
+00004b f7f1                      			BRNE inner_loop ;Unless R25:R24 overflows, go back to inner_loop
                                  	
-00004b 957a                      	DEC R23 ;Decrement R23
-00004c f7d1                      	BRNE outer_loop ;Unless R23 overflows go back to outer_loop
+00004c 957a                      	DEC R23 ;Decrement R23
+00004d f7d1                      	BRNE outer_loop ;Unless R23 overflows go back to outer_loop
+00004e 9508                      RET
+                                 
 
 
 RESOURCE USE INFORMATION
@@ -964,7 +966,7 @@ fmulsu:   0 icall :   0 ijmp  :   0 in    :   1 inc   :   0 jmp   :   0
 ld    :   0 ldd   :   0 ldi   :  11 lds   :   0 lpm   :   0 lsl   :   0 
 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
 neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  10 pop   :   0 
-push  :   0 rcall :   1 ret   :   4 reti  :   0 rjmp  :   3 rol   :   0 
+push  :   0 rcall :   2 ret   :   4 reti  :   0 rjmp  :   3 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   1 sbic  :   0 sbis  :   2 
 sbiw  :   1 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
 sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
@@ -975,7 +977,7 @@ Instructions used: 11 out of 113 (9.7%)
 "ATmega32A" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x00009c     74      0     74   32768   0.2%
+[.cseg] 0x000000 0x00009e     76      0     76   32768   0.2%
 [.dseg] 0x000060 0x000060      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 

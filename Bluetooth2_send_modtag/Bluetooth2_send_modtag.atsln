@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{18226A42-8477-4023-8AD2-40C49DA407C9}") = "Bluetooth2_send_modtag", "Bluetooth2_send_modtag\Bluetooth2_send_modtag.asmproj", "{B2AF07FA-9553-466A-A9C1-920AEDA7BB27}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B2AF07FA-9553-466A-A9C1-920AEDA7BB27}.Debug|AVR.ActiveCfg = Debug|AVR
+		{B2AF07FA-9553-466A-A9C1-920AEDA7BB27}.Debug|AVR.Build.0 = Debug|AVR
+		{B2AF07FA-9553-466A-A9C1-920AEDA7BB27}.Release|AVR.ActiveCfg = Release|AVR
+		{B2AF07FA-9553-466A-A9C1-920AEDA7BB27}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

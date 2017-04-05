@@ -24,9 +24,9 @@
  <LABELS>
   <Reset><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>6</LINE></Reset>
   <Main><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>27</LINE></Main>
+  <recieve><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>40</LINE></recieve>
   <Transmit><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>46</LINE></Transmit>
   <delay_1sec><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>52</LINE></delay_1sec>
-  <Recieve><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>40</LINE></Recieve>
   <outer_loop><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>54</LINE></outer_loop>
   <inner_loop><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth\Bluetooth\main.asm</FILE><LINE>57</LINE></inner_loop>
  </LABELS>

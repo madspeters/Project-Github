@@ -1,0 +1,33 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.6</VERSION>
+ <DEVICE>"ATmega32A"</DEVICE>
+ <WORKING_DIR>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.1.130\avrasm\inc\m32adef.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\Debug\Bluetooth2_send_modtag.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>Bluetooth2_send_modtag.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>Bluetooth2_send_modtag.map</FILE>
+  <FILE>Bluetooth2_send_modtag.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <Reset><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>6</LINE></Reset>
+  <Main><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>27</LINE></Main>
+  <delay_1sec><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>52</LINE></delay_1sec>
+  <recieve><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>40</LINE></recieve>
+  <Transmit><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>46</LINE></Transmit>
+  <outer_loop><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>54</LINE></outer_loop>
+  <inner_loop><FILE>C:\Users\jespe\Desktop\Project-Github\Bluetooth2_send_modtag\Bluetooth2_send_modtag\main.asm</FILE><LINE>57</LINE></inner_loop>
+ </LABELS>
+</ASSEMBLER_INFO>

@@ -24,19 +24,19 @@ Reset:	 ldi R16,HIGH(RAMEND) ; Stack setup
 		 OUT UBRRL, R16 
 		 SBI UCSRA, U2X		;bruges til 1MHz baudrate
 
-Main:	/*
-		in R17, PINC
-		RCall Transmit
-		 
-		COM R17
-		OUT PORTB, R17
-		RCALL delay_1sec
-		rjmp Main
-		*/
+Main:	
+		
 
+
+		;DI R17, 'S'
+		;SBIS PINC, 2
+		;RCALL transmit
+		RCALL delay_1sec
 		RCALL recieve
 		OUT PORTB, R17
-		RJMP Main
+
+		rjmp Main
+
 Recieve:
 		SBIS UCSRA, RXC
 		ret 
@@ -61,3 +61,4 @@ delay_1sec:
 	DEC R23 ;Decrement R23
 	BRNE outer_loop ;Unless R23 overflows go back to outer_loop
 RET
+
