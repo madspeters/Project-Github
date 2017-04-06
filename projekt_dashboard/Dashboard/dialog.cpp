@@ -14,7 +14,9 @@
 #include <QSerialPortInfo>
 #include <QString>
 #include <QDebug>
-
+#include <QIODevice>
+#include <QByteArray>
+#include <QDataStream>
 
 using namespace std;
 Dialog::Dialog(QWidget *parent) :
@@ -44,14 +46,17 @@ void Dialog::on_Start_clicked()
     //char data[1];
    // data[0] = '60';
   //  serial->write(data);
-    int i = 0;
-    char* datafrabil[300];
-    while (i < 300){
-        serial->read(datafrabil[i]);
-        qDebug() << datafrabil[i] << ", ";
-        i++;
-    }
-    delete[] datafrabil;
+
+
+   QByteArray datafrabil;
+   //QByteArray pik = "123456789!!dkkdnauwbrmfniasknca";
+
+   while(true){
+        serial->waitForReadyRead(2000);
+        datafrabil.append(serial->read(1));
+        qDebug() << (int)datafrabil.at(0);
+   }
+
 }
 
 // Når stopknappen klikkes
@@ -60,6 +65,7 @@ void Dialog::on_Stop_clicked()
     char data[1];
     data[0] = '0';
     serial->write(data);
+
 }
 
 
@@ -67,6 +73,7 @@ void Dialog::on_Connect_clicked()
 {
     ui->Connected_label->setText("Connecting... ");
     serial->setPortName("COM3"); //dev/tty.Bluetooth-Incoming-Port
+    serial->setPortName("/dev/tty.RNBT-7996-RNI-SPP");
     serial->open(QSerialPort::ReadWrite);
     serial->setBaudRate(QSerialPort::Baud9600);
     serial->setDataBits(QSerialPort::Data8);
