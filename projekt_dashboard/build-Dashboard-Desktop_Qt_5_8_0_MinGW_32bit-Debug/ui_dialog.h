@@ -14,17 +14,18 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QDialog>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLCDNumber>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSlider>
-#include <QtWidgets/QSpacerItem>
+#include <QtWidgets/QTextBrowser>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
-#include "qcustomplot.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -34,9 +35,6 @@ public:
     QWidget *layoutWidget;
     QGridLayout *gridLayout;
     QGraphicsView *graphicsView;
-    QCustomPlot *Kraft;
-    QCustomPlot *widget_2;
-    QCustomPlot *Hastighed;
     QWidget *layoutWidget_2;
     QVBoxLayout *verticalLayout;
     QLabel *laptime;
@@ -47,9 +45,14 @@ public:
     QLCDNumber *top_speed_number;
     QPushButton *Start;
     QPushButton *Stop;
-    QPushButton *Automode;
-    QSpacerItem *verticalSpacer;
-    QLabel *label_4;
+    QFrame *line;
+    QPushButton *Connect;
+    QLabel *Connected_label;
+    QFrame *line_2;
+    QLineEdit *dutycycle;
+    QPushButton *dutybutton;
+    QFrame *line_3;
+    QTextBrowser *datafrabil2;
     QSlider *pwm_slider;
 
     void setupUi(QDialog *Dialog)
@@ -78,24 +81,9 @@ public:
 
         gridLayout->addWidget(graphicsView, 0, 0, 1, 1);
 
-        Kraft = new QCustomPlot(layoutWidget);
-        Kraft->setObjectName(QStringLiteral("Kraft"));
-
-        gridLayout->addWidget(Kraft, 1, 0, 1, 1);
-
-        widget_2 = new QCustomPlot(layoutWidget);
-        widget_2->setObjectName(QStringLiteral("widget_2"));
-
-        gridLayout->addWidget(widget_2, 1, 1, 1, 1);
-
-        Hastighed = new QCustomPlot(layoutWidget);
-        Hastighed->setObjectName(QStringLiteral("Hastighed"));
-
-        gridLayout->addWidget(Hastighed, 0, 1, 1, 1);
-
         layoutWidget_2 = new QWidget(Dialog);
         layoutWidget_2->setObjectName(QStringLiteral("layoutWidget_2"));
-        layoutWidget_2->setGeometry(QRect(900, 10, 241, 681));
+        layoutWidget_2->setGeometry(QRect(900, -20, 241, 681));
         verticalLayout = new QVBoxLayout(layoutWidget_2);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
@@ -162,26 +150,65 @@ public:
 
         verticalLayout->addWidget(Stop);
 
-        Automode = new QPushButton(layoutWidget_2);
-        Automode->setObjectName(QStringLiteral("Automode"));
-        Automode->setMinimumSize(QSize(0, 50));
+        line = new QFrame(layoutWidget_2);
+        line->setObjectName(QStringLiteral("line"));
+        line->setFrameShape(QFrame::HLine);
+        line->setFrameShadow(QFrame::Sunken);
 
-        verticalLayout->addWidget(Automode);
+        verticalLayout->addWidget(line);
 
-        verticalSpacer = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding);
+        Connect = new QPushButton(layoutWidget_2);
+        Connect->setObjectName(QStringLiteral("Connect"));
 
-        verticalLayout->addItem(verticalSpacer);
+        verticalLayout->addWidget(Connect);
 
-        label_4 = new QLabel(layoutWidget_2);
-        label_4->setObjectName(QStringLiteral("label_4"));
-        sizePolicy1.setHeightForWidth(label_4->sizePolicy().hasHeightForWidth());
-        label_4->setSizePolicy(sizePolicy1);
+        Connected_label = new QLabel(layoutWidget_2);
+        Connected_label->setObjectName(QStringLiteral("Connected_label"));
 
-        verticalLayout->addWidget(label_4);
+        verticalLayout->addWidget(Connected_label);
+
+        line_2 = new QFrame(layoutWidget_2);
+        line_2->setObjectName(QStringLiteral("line_2"));
+        line_2->setFrameShape(QFrame::HLine);
+        line_2->setFrameShadow(QFrame::Sunken);
+
+        verticalLayout->addWidget(line_2);
+
+        dutycycle = new QLineEdit(layoutWidget_2);
+        dutycycle->setObjectName(QStringLiteral("dutycycle"));
+        dutycycle->setClearButtonEnabled(false);
+
+        verticalLayout->addWidget(dutycycle);
+
+        dutybutton = new QPushButton(layoutWidget_2);
+        dutybutton->setObjectName(QStringLiteral("dutybutton"));
+
+        verticalLayout->addWidget(dutybutton);
+
+        line_3 = new QFrame(layoutWidget_2);
+        line_3->setObjectName(QStringLiteral("line_3"));
+        line_3->setFrameShape(QFrame::HLine);
+        line_3->setFrameShadow(QFrame::Sunken);
+
+        verticalLayout->addWidget(line_3);
+
+        datafrabil2 = new QTextBrowser(layoutWidget_2);
+        datafrabil2->setObjectName(QStringLiteral("datafrabil2"));
+
+        verticalLayout->addWidget(datafrabil2);
 
         pwm_slider = new QSlider(layoutWidget_2);
         pwm_slider->setObjectName(QStringLiteral("pwm_slider"));
+        pwm_slider->setMinimum(0);
+        pwm_slider->setMaximum(200);
+        pwm_slider->setSingleStep(1);
+        pwm_slider->setPageStep(1);
+        pwm_slider->setValue(100);
+        pwm_slider->setSliderPosition(100);
+        pwm_slider->setTracking(true);
         pwm_slider->setOrientation(Qt::Horizontal);
+        pwm_slider->setInvertedAppearance(false);
+        pwm_slider->setInvertedControls(false);
 
         verticalLayout->addWidget(pwm_slider);
 
@@ -199,8 +226,10 @@ public:
         Top_speed->setText(QApplication::translate("Dialog", "Top speed:", Q_NULLPTR));
         Start->setText(QApplication::translate("Dialog", "Start", Q_NULLPTR));
         Stop->setText(QApplication::translate("Dialog", "Stop", Q_NULLPTR));
-        Automode->setText(QApplication::translate("Dialog", "Automode", Q_NULLPTR));
-        label_4->setText(QApplication::translate("Dialog", "Set duty cycle", Q_NULLPTR));
+        Connect->setText(QApplication::translate("Dialog", "Connect to Bluetooth", Q_NULLPTR));
+        Connected_label->setText(QApplication::translate("Dialog", "Not connected", Q_NULLPTR));
+        dutycycle->setPlaceholderText(QApplication::translate("Dialog", "Choose speed (0-100%)", Q_NULLPTR));
+        dutybutton->setText(QApplication::translate("Dialog", "Set speed", Q_NULLPTR));
     } // retranslateUi
 
 };

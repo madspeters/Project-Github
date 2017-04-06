@@ -27,10 +27,12 @@ Dialog::Dialog(QWidget *parent) :
 
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
+
 }
 
 Dialog::~Dialog()
 {
+    serial->close();
     delete ui;
 }
 
@@ -38,9 +40,19 @@ Dialog::~Dialog()
 // Når startknappen klikkes
 void Dialog::on_Start_clicked()
 {
-    char data[1];
-    data[0] = '60';
-    serial->write(data);
+    //char data[1];
+   // data[0] = '60';
+  //  serial->write(data);
+    int i = 0;
+    char[300] datafrabil;
+    while (i < 300){
+        serial->read(datafrabil[i]);
+        ui->datafrabil2->append(datafrabil[]);
+        ui->datafrabil2->append(", ");
+        i++;
+    }
+}
+
 
 }
 

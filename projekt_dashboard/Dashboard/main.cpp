@@ -1,7 +1,6 @@
 #include "dialog.h"
 #include <QApplication>
 #include <QWindow>
-#include <QSerialPortInfo>
 #include <QComboBox>
 
 int main(int argc, char *argv[])
