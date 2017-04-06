@@ -45,14 +45,14 @@ void Dialog::on_Start_clicked()
    // data[0] = '60';
   //  serial->write(data);
     int i = 0;
-    char datafrabil[300];
+    char* datafrabil[300];
     while (i < 300){
         serial->read(datafrabil[i]);
         qDebug() << datafrabil[i] << ", ";
+        i++;
     }
+    delete[] datafrabil;
 }
-
-
 
 // Når stopknappen klikkes
 void Dialog::on_Stop_clicked()
@@ -66,7 +66,7 @@ void Dialog::on_Stop_clicked()
 void Dialog::on_Connect_clicked()
 {
     ui->Connected_label->setText("Connecting... ");
-    serial->setPortName("/dev/tty.Bluetooth-Incoming-Port");
+    serial->setPortName("COM3"); //dev/tty.Bluetooth-Incoming-Port
     serial->open(QSerialPort::ReadWrite);
     serial->setBaudRate(QSerialPort::Baud9600);
     serial->setDataBits(QSerialPort::Data8);
