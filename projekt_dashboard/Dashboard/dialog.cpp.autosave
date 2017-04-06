@@ -44,11 +44,11 @@ void Dialog::on_Start_clicked()
    // data[0] = '60';
   //  serial->write(data);
     int i = 0;
-    vector<string> datafrabil[300];
+    char datafrabil[300];
     QString datafrabil3;
     while (i < 300){
         serial->read(datafrabil[i]);
-        ui->datafrabil2->setText((datafrabil[i]));
+        ui->datafrabil2->setText(string(datafrabil[i]));
         i++;
     }
 }
