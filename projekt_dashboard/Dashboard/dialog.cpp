@@ -17,6 +17,7 @@
 #include <QIODevice>
 #include <QByteArray>
 #include <QDataStream>
+#include <QObject>
 
 using namespace std;
 Dialog::Dialog(QWidget *parent) :
@@ -30,7 +31,7 @@ Dialog::Dialog(QWidget *parent) :
 
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
-
+    QObject::connect(serial, SIGNAL(readyRead()), this, SLOT(readSerial()));
 }
 
 Dialog::~Dialog()
@@ -41,21 +42,20 @@ Dialog::~Dialog()
 
 
 // Når startknappen klikkes
+
+void Dialog::readSerial(){
+    QByteArray datafrabil;
+    serial->waitForReadyRead(2000);
+    datafrabil.append(serial->read(1));
+    qDebug() << (int)datafrabil.at(0);
+}
+
 void Dialog::on_Start_clicked()
 {
-    //char data[1];
-   // data[0] = '60';
-  //  serial->write(data);
+    char data[1];
+    data[0] = '60';
+    serial->write(data);
 
-
-   QByteArray datafrabil;
-   //QByteArray pik = "123456789!!dkkdnauwbrmfniasknca";
-
-   while(true){
-        serial->waitForReadyRead(2000);
-        datafrabil.append(serial->read(1));
-        qDebug() << (int)datafrabil.at(0);
-   }
 
 }
 

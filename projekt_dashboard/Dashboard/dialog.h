@@ -28,11 +28,11 @@ private slots:
 
     void on_Start_clicked();
 
-
     void on_Connect_clicked();
 
     void on_dutybutton_clicked();
 
+    void readSerial();
 
 private:
     Ui::Dialog *ui;
