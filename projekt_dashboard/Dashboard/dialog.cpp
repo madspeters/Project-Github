@@ -55,16 +55,15 @@ void Dialog::on_Stop_clicked()
 
 void Dialog::on_Connect_clicked()
 {
-    while (!serial->isOpen()){
-        ui->Connected_label->setText("Connecting... ");
-        serial->setPortName("/dev/tty.Bluetooth-Incoming-Port");
-        serial->open(QSerialPort::ReadWrite);
-        serial->setBaudRate(QSerialPort::Baud9600);
-        serial->setDataBits(QSerialPort::Data8);
-        serial->setParity(QSerialPort::NoParity);
-        serial->setStopBits(QSerialPort::OneStop);
-        serial->setFlowControl(QSerialPort::NoFlowControl);
-    }
+    ui->Connected_label->setText("Connecting... ");
+    serial->setPortName("/dev/tty.Bluetooth-Incoming-Port");
+    serial->open(QSerialPort::ReadWrite);
+    serial->setBaudRate(QSerialPort::Baud9600);
+    serial->setDataBits(QSerialPort::Data8);
+    serial->setParity(QSerialPort::NoParity);
+    serial->setStopBits(QSerialPort::OneStop);
+    serial->setFlowControl(QSerialPort::NoFlowControl);
+    if(serial->isWritable())
     ui->Connected_label->setText("You are connected!");
 }
 
