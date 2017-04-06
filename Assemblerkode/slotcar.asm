@@ -214,3 +214,9 @@ Receive:
 		RET
 		IN	R17, UDR
 		RET
+
+Transmit:
+		SBIS UCSRA, UDRE	;Is UDR empty?
+		RJMP Transmit		;if not, wait some more
+		OUT  UDR, R17		;Send R17 to UDR
+		RET
