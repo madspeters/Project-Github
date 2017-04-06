@@ -13,6 +13,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #include <QString>
+#include <QDebug>
 
 
 using namespace std;
@@ -44,15 +45,12 @@ void Dialog::on_Start_clicked()
    // data[0] = '60';
   //  serial->write(data);
     int i = 0;
-    vector<string> datafrabil[300];
-    QString datafrabil3;
+    char datafrabil[300];
     while (i < 300){
         serial->read(datafrabil[i]);
-        ui->datafrabil2->setText((datafrabil[i]));
-        i++;
+        qDebug() << datafrabil[i] << ", ";
     }
 }
-
 
 
 
@@ -75,8 +73,10 @@ void Dialog::on_Connect_clicked()
     serial->setParity(QSerialPort::NoParity);
     serial->setStopBits(QSerialPort::OneStop);
     serial->setFlowControl(QSerialPort::NoFlowControl);
-    if(serial->isWritable())
-    ui->Connected_label->setText("You are connected!");
+    if(serial->isOpen())
+        ui->Connected_label->setText("You are connected!");
+    else
+        ui->Connected_label->setText("Bitch you messed up");
 }
 
 
