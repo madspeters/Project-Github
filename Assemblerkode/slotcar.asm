@@ -154,8 +154,8 @@ main:
     
     ;RCALL read_adc
 	
-    IN R19, ADCH
-    RCALL TRANSMIT
+    ;IN R19, ADCH
+    ;RCALL TRANSMIT
     
     RCALL delay_1sec
     
@@ -166,6 +166,22 @@ main:
     ;CBI GREEN_LED_PORT, GREEN_LED
     
     ;RCALL read_adc
+	; Jesper kode -----------------------------------------------
+	RCALL Receive				;Modtag Byte1
+	CPI R17, 0x55
+	BREQ set1					;Branch hvis det var en SET kommand
+	CPI R17, 0xAA
+	BREQ get1					;Branch hvis det er en GET kommand
+	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
+
+set1: ;SET--------------------------------------------------------
+	RCALL Receive
+	CPI R17, 0x10
+	BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
+	
+	RJMP set1					;Loop hvis intet er modtaget
+
+get1: ;
     
 	RJMP main
 	
@@ -266,3 +282,11 @@ read_adc:
     turn_on_green:
         SBI GREEN_LED_PORT, GREEN_LED
         RET
+
+
+set1_hastighed2:
+	RCALL Recieve
+	MOV R2, R17
+	OUT OCR2, R17
+
+	RJMP main
