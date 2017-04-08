@@ -97,14 +97,46 @@ reset:
 	OUT OCR2, R16 ; Output compare register - OC2 pin is set LOW when
                   ; the value in OCR2 matches the value in the
                   ; timer/counter register (TCNT2)
+    
+    ;-----------;              
+    ; BLUETOOTH ;
+    ;-----------;
+	LDI R16, (1<<TXEN)|(1<<RXEN) ; Enable transmit/receive
+	OUT UCSRB, R16
+	LDI R16, (1<<UCSZ1)|(1<<UCSZ0)|(1<<URSEL) ; Set character size = 8 bits
+	OUT UCSRC, R16
+	;LDI R16, 103		;16MHz Sætter baudrate til 9600, med U2X = 0 og error = 0,2%
+	LDI R16, 12		;1 MHz
+	OUT UBRRL, R16 
+	SBI UCSRA, U2X		;bruges til 1MHz baudrate
 
 ;-------------------;
 ;     MAIN LOOP	    ;
 ;-------------------;
 main:
+    
+    ; Jespers bluetooth kode -------------------------------------------
+	RCALL Receive				;Modtag Byte1
+	CPI R17, 0x55
+	BREQ set1					;Branch hvis det var en SET kommand
+	CPI R17, 0xAA
+	BREQ get1					;Branch hvis det er en GET kommand
+	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
 
-	RJMP main
-	
+    set1: ;SET----------------------------------------------------------
+        RCALL Receive
+        CPI R17, 0x10
+        BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
+        CPI R17, 0x11
+        BREQ set1_stop2
+        CPI R17, 0x12
+        ;BREQ set1_auto2
+        RJMP set1					;Loop hvis intet er modtaget
+
+    get1: ;-------------------------------------------------------------
+        
+        RJMP main
+        
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
@@ -129,3 +161,40 @@ delay_1sec:
     POP R23
     
 	RET
+
+Receive:
+	SBIS UCSRA, RXC
+	RET
+	IN	R17, UDR
+	RET
+    
+Transmit:
+    SBIS UCSRA, UDRE	;Is UDR empty?
+    RJMP Transmit		;if not, wait some more
+    OUT  UDR, R17		;Send R17 to UDR
+    RET
+    
+set1_hastighed2:
+	RCALL Receive
+	MOV R2, R17
+	OUT OCR2, R2
+
+	RJMP main
+
+set1_stop2:
+	RCALL Receive
+	LDI R17, 0
+	MOV R3, R17
+	
+	OUT OCR2, R3
+	
+	RJMP main
+	
+set1_auto2:
+	RCALL Receive
+	LDI R17, 120
+	MOV R4, R17
+	
+	OUT OCR2, R4
+	
+	RJMP main
