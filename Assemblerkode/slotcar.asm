@@ -114,6 +114,15 @@ reset:
 	LDI R16, (1<<ISC00)|(1<<ISC10) ; Set INT0 and INT1 to trigger on any logical change
 	OUT MCUCR, R16
 	SEI ; Enable global interrupts
+    
+    ;--------------------;
+    ; SRAM START POINTER ;
+    ;--------------------;
+    
+    LDI ZL, low(SRAM_START)  ; SRAM_START er addresse 0x60. ZL og ZH er
+    LDI ZH, high(SRAM_START) ; hhv. R30 og R31, som tilsammen udgør et
+                             ; særligt 16-bit pointer register
+                             ; http://www.avr-asm-tutorial.net/avr_en/beginner/REGISTER.html
 
 ;-------------------;
 ;     MAIN LOOP	    ;
