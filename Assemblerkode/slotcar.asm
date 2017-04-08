@@ -103,6 +103,17 @@ reset:
 	OUT OCR2, R16 ; Output compare register - OC2 pin is set LOW when
                   ; the value in OCR2 matches the value in the
                   ; timer/counter register (TCNT2)
+    
+    ;------------;
+    ; INTERRUPTS ;
+    ;------------;
+    
+    ; Enable interrupts
+	LDI R16, (1<<INT0)|(1<<INT1) ; Enable INT0 and INT1
+	OUT GICR, R16
+	LDI R16, (1<<ISC00)|(1<<ISC10) ; Set INT0 and INT1 to trigger on any logical change
+	OUT MCUCR, R16
+	SEI ; Enable global interrupts
 
 ;-------------------;
 ;     MAIN LOOP	    ;
@@ -135,3 +146,40 @@ delay_1sec:
     POP R23
     
     RET
+    
+;----------------------------;
+; INTERRUPT SERVICE ROUTINES ;
+;----------------------------;
+distance_interrupt:
+    ; Toggle green LED on any logical change
+    
+    SBIS GREEN_LED_PORT, GREEN_LED ; If bit is clear, go to turn_on_green
+    RJMP turn_on_green
+    
+    CBI GREEN_LED_PORT, GREEN_LED ; If bit is set, clear it and return
+    RETI
+    
+    turn_on_green:
+        SBI GREEN_LED_PORT, GREEN_LED ; Set bit
+    
+    RETI
+    
+finish_line_interrupt:
+    ; Stop motor and turn on the red LED for 1 sec
+    PUSH R16
+    
+    LDI R16, 0
+    OUT OCR2, R16
+    
+    SBI RED_LED_PORT, RED_LED
+    
+    RCALL delay_1sec
+    
+    CBI RED_LED_PORT, RED_LED
+    
+    LDI R16, DEFAULT_MOTORSPEED
+    OUT OCR2, R16
+    
+    POP R16
+       
+    RETI
