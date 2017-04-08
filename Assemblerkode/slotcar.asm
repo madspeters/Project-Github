@@ -10,7 +10,7 @@
 
 .EQU GREEN_LED_DDR = DDRB
 .EQU GREEN_LED_PORT = PORTB
-.EQU GREEN_LED = PINB2
+.EQU GREEN_LED = PINB2 ; Move this to PINB3 (OC0) for timer interrupt
 
 .EQU STRAIN_GAUGE_DDR = DDRA
 .EQU STRAIN_GAUGE_PIN = PINA
@@ -52,6 +52,9 @@ RJMP distance_interrupt ; (INT0, PD2)
 
 .ORG 0x04
 RJMP finish_line_interrupt ; (INT1, PD3)
+
+.org 0x16 ; TIMER0 overflow interrupt
+RJMP timer0_overflow
 
 ;-------------------;
 ;       SETUP	    ;
@@ -191,4 +194,8 @@ finish_line_interrupt:
     
     POP R16
        
+    RETI
+
+timer0_overflow:
+    
     RETI
