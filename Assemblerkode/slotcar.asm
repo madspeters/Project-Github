@@ -48,11 +48,11 @@
 .ORG 0x00
 RJMP setup ; Reset
 
-.ORG 0x02
-RJMP distance_interrupt ; Interrupt on INT0 (PD2)
+;.ORG 0x02
+;RJMP distance_interrupt ; Interrupt on INT0 (PD2)
 
-.ORG 0x04
-RJMP finish_line_interrupt ; Interrupt on INT1 (PD3)
+;.ORG 0x04
+;RJMP finish_line_interrupt ; Interrupt on INT1 (PD3)
 
 ;-------------------;
 ;       SETUP	    ;
@@ -106,7 +106,7 @@ setup:
 	LDI R16, 0b00000101 ; (1<<ISC00)|(1<<ISC10)
                         ; Set INT1 and INT0 to trigger on any logical change
 	OUT MCUCR, R16
-	SEI ; Enable global interrupts
+	;SEI ; Enable global interrupts
 	
 	; Set up ADC
 	;--------------------------------------------;
@@ -157,7 +157,7 @@ main:
     ;IN R19, ADCH
     ;RCALL TRANSMIT
     
-    RCALL delay_1sec
+    ;RCALL delay_1sec
     
     ;SBIS DISTANCE_PIN, DISTANCE
     ;SBI GREEN_LED_PORT, GREEN_LED
@@ -178,10 +178,13 @@ set1: ;SET--------------------------------------------------------
 	RCALL Receive
 	CPI R17, 0x10
 	BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
-	
+	CPI R17, 0x11
+	BREQ set1_stop2
+	CPI R17, 0x12
+	;BREQ set1_auto2
 	RJMP set1					;Loop hvis intet er modtaget
 
-get1: ;
+get1: ;-------------------------------------------------------------
     
 	RJMP main
 	
@@ -258,7 +261,7 @@ Receive:
 Transmit:
     SBIS UCSRA, UDRE	;Is UDR empty?
     RJMP Transmit		;if not, wait some more
-    OUT  UDR, R19		;Send R17 to UDR
+    OUT  UDR, R17		;Send R17 to UDR
     RET
 
 read_adc:
@@ -285,8 +288,26 @@ read_adc:
 
 
 set1_hastighed2:
-	RCALL Recieve
+	RCALL Receive
 	MOV R2, R17
-	OUT OCR2, R17
+	OUT OCR2, R2
 
+	RJMP main
+
+set1_stop2:
+	RCALL Receive
+	LDI R17, 0
+	MOV R3, R17
+	
+	OUT OCR2, R3
+	
+	RJMP main
+	
+set1_auto2:
+	RCALL Receive
+	LDI R17, 120
+	MOV R4, R17
+	
+	OUT OCR2, R4
+	
 	RJMP main
