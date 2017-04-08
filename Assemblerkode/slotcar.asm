@@ -47,6 +47,12 @@
 .ORG 0x00
 RJMP reset
 
+.ORG 0x02
+RJMP distance_interrupt ; (INT0, PD2)
+
+.ORG 0x04
+RJMP finish_line_interrupt ; (INT1, PD3)
+
 ;-------------------;
 ;       SETUP	    ;
 ;-------------------;
