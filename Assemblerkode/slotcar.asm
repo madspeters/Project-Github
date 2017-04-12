@@ -194,7 +194,5 @@ set1_auto2:
 	RCALL Receive
 	LDI R17, 120
 	MOV R4, R17
-	
 	OUT OCR2, R4
-	
 	RJMP main
