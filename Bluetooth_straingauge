@@ -110,102 +110,38 @@ reset:
 	OUT UBRRL, R16 
 	SBI UCSRA, U2X		;bruges til 1MHz baudrate
 
+    ;-----------;              
+    ; BLUETOOTH ;
+    ;-----------;
+	;--------------------------------------------;
+	; REFS1 REFS0 ADLAR MUX4 MUX3 MUX2 MUX1 MUX0 
+	;   7     6     5    4    3    2    1    0   ;
+	;--------------------------------------------;
+	
+	LDI R16, 0b00100000 ; AREF, left adjusted, ADC0
+	OUT ADMUX, R16
+	
+	;---------------------------------------------;
+	; ADEN ADSC ADATE ADIF ADIE ADPS2 ADPS1 ADPS0 ;
+	;  7    6     5    4    3     2     1     0   ;
+	;---------------------------------------------;
+	LDI R16, 0b11100011 ; Enable, start conversion, auto-trigger, prescaler = 8
+	OUT ADCSRA, R16
+	
+	;-------------------;
+	; ADTS2 ADTS1 ADTS0 ;
+	;   7     6     5   ;
+	;-------------------;
+	LDI R16, 0b00000000 ; Set trigger-source to free running mode
+	OUT SFIOR, R16
+
 ;-------------------;
 ;     MAIN LOOP	    ;
 ;-------------------;
 main:
-    
-    ; Jespers bluetooth kode -------------------------------------------
-	RCALL Receive				;Modtag Byte1
-	CPI R17, 0x55
-	BREQ set1					;Branch hvis det var en SET kommand
-	CPI R17, 0xAA
-	BREQ get1					;Branch hvis det er en GET kommand
-	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
-
-    set1: ;SET----------------------------------------------------------
-        RCALL Receive
-        CPI R17, 0x10
-        BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
-        CPI R17, 0x11
-        BREQ set1_stop2
-        CPI R17, 0x12
-        BREQ set1_auto2
-		CPI R17, 0x13
-        BREQ set1_blink2
-
-        RJMP main					;Loop hvis intet er modtaget
-
-    get1: ;GET-------------------------------------------------------------
-		RCALL Receive
-		CPI R17, 0x02
-        BREQ get1_hastighed2
-		CPI R17, 0x03
-        BREQ get1_position2
-		CPI R17, 0x05
-        BREQ get1_straingauge2
-		CPI R17, 0x06
-        BREQ get1_positionsensor2
-		CPI R17, 0x07
-        BREQ get1_maalstregssensor2
-
-        RJMP main
-   
-		;SET2-----------------------------------------------------------------------
-		set1_hastighed2:
-			RCALL Receive
-			MOV R2, R17
-			OUT OCR2, R2
-			RJMP main
-
-		set1_stop2:
-			LDI R17, 0
-			MOV R2, R17
-			OUT OCR2, R2
-			RJMP main
-		
-		set1_auto2:
-			LDI R17, 120
-			MOV R2, R17
-			OUT OCR2, R2
-			RJMP main
-
-		set1_blink2:
-			RCALL Receive
-			MOV R8, R17
-			;Kode der sender R8 ud til en blink
-			RJMP main ;der mangler kode til blink
-
-		;GET2-----------------------------------------------------------------------
-
-        get1_hastighed2:
-		MOV R17, R2
-		RCALL Transmit
-		RJMP main
-
-        get1_position2:
-		MOV R17, R3
-		RCALL Transmit
-		MOV R17, R4
-		RCALL transmit
-		RJMP main
-
-        get1_straingauge2:
-		MOV R17, R5
-		RCALL Transmit
-		RJMP main
-
-        get1_positionsensor2:
-		MOV R17, R6
-		RCALL Transmit
-		RJMP main
-
-        get1_maalstregssensor2:
-		MOV R17, R7
-		RCALL Transmit
-		RJMP main
-
-
+	IN R17, ADCH
+	RJMP main
+	
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
