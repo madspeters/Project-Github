@@ -32,7 +32,7 @@
 .EQU MOTOR_PORT = PORTD
 .EQU MOTOR = PIND7
 
-.EQU DEFAULT_MOTORSPEED = 90
+.EQU DEFAULT_MOTORSPEED = 120
 
 .MACRO SSP
 	LDI @0, low(@1)
@@ -140,11 +140,25 @@ reset:
 ;-------------------;
 main:
 	IN R17, ADCH
+	RCALL transmit
+	RCALL delay_1sec
 	RJMP main
-	
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
+
+delay_1msec:
+		PUSH R23
+		LDI R23, 0xFF
+	
+loop:	 DEC R23
+		NOP
+		
+		BRNE loop
+
+    POP R23
+RET
+
 delay_1sec:
 	PUSH R23
     PUSH R24
@@ -184,5 +198,4 @@ Transmit:
     RJMP Transmit		;if not, wait some more
     OUT  UDR, R17		;Send R17 to UDR
     RET
-    
 
