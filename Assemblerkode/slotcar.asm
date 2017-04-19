@@ -130,13 +130,82 @@ main:
         CPI R17, 0x11
         BREQ set1_stop2
         CPI R17, 0x12
-        ;BREQ set1_auto2
-        RJMP set1					;Loop hvis intet er modtaget
+        BREQ set1_auto2
+		CPI R17, 0x13
+        BREQ set1_blink2
 
-    get1: ;-------------------------------------------------------------
-        
+        RJMP main					;Loop hvis intet er modtaget
+
+    get1: ;GET-------------------------------------------------------------
+		RCALL Receive
+		CPI R17, 0x02
+        BREQ get1_hastighed2
+		CPI R17, 0x03
+        BREQ get1_position2
+		CPI R17, 0x05
+        BREQ get1_straingauge2
+		CPI R17, 0x06
+        BREQ get1_positionsensor2
+		CPI R17, 0x07
+        BREQ get1_maalstregssensor2
+
         RJMP main
-        
+   
+		;SET2-----------------------------------------------------------------------
+		set1_hastighed2:
+			RCALL Receive
+			MOV R2, R17
+			OUT OCR2, R2
+			RJMP main
+
+		set1_stop2:
+			LDI R17, 0
+			MOV R2, R17
+			OUT OCR2, R2
+			RJMP main
+		
+		set1_auto2:
+			LDI R17, 120
+			MOV R2, R17
+			OUT OCR2, R2
+			RJMP main
+
+		set1_blink2:
+			RCALL Receive
+			MOV R8, R17
+			;Kode der sender R8 ud til en blink
+			RJMP main ;der mangler kode til blink
+
+		;GET2-----------------------------------------------------------------------
+
+        get1_hastighed2:
+		MOV R17, R2
+		RCALL Transmit
+		RJMP main
+
+        get1_position2:
+		MOV R17, R3
+		RCALL Transmit
+		MOV R17, R4
+		RCALL transmit
+		RJMP main
+
+        get1_straingauge2:
+		MOV R17, R5
+		RCALL Transmit
+		RJMP main
+
+        get1_positionsensor2:
+		MOV R17, R6
+		RCALL Transmit
+		RJMP main
+
+        get1_maalstregssensor2:
+		MOV R17, R7
+		RCALL Transmit
+		RJMP main
+
+
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
@@ -162,9 +231,15 @@ delay_1sec:
     
 	RET
 
+;Receive:
+;	SBIS UCSRA, RXC
+;	RET
+;	IN	R17, UDR
+;	RET
+
 Receive:
 	SBIS UCSRA, RXC
-	RET
+	RJMP Receive
 	IN	R17, UDR
 	RET
     
@@ -174,25 +249,5 @@ Transmit:
     OUT  UDR, R17		;Send R17 to UDR
     RET
     
-set1_hastighed2:
-	RCALL Receive
-	MOV R2, R17
-	OUT OCR2, R2
 
-	RJMP main
 
-set1_stop2:
-	RCALL Receive
-	LDI R17, 0
-	MOV R3, R17
-	
-	OUT OCR2, R3
-	
-	RJMP main
-	
-set1_auto2:
-	RCALL Receive
-	LDI R17, 120
-	MOV R4, R17
-	OUT OCR2, R4
-	RJMP main
