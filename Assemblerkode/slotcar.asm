@@ -32,7 +32,7 @@
 .EQU MOTOR_PORT = PORTD
 .EQU MOTOR = PIND7
 
-.EQU DEFAULT_MOTORSPEED = 90
+.EQU DEFAULT_MOTORSPEED = 0
 
 .MACRO SSP
 	LDI @0, low(@1)
@@ -53,8 +53,8 @@ RJMP distance_interrupt ; (INT0, PD2)
 .ORG 0x04
 RJMP finish_line_interrupt ; (INT1, PD3)
 
-.org 0x16 ; TIMER0 overflow interrupt
-RJMP timer0_overflow
+;.org 0x16 ; TIMER0 overflow interrupt
+;RJMP timer0_overflow
 
 ;-------------------;
 ;       SETUP	    ;
@@ -126,6 +126,8 @@ reset:
     LDI ZH, high(SRAM_START) ; hhv. R30 og R31, som tilsammen udgør et
                              ; særligt 16-bit pointer register
                              ; http://www.avr-asm-tutorial.net/avr_en/beginner/REGISTER.html
+	LDI R16, 0
+	STS Z, R16
 
 ;-------------------;
 ;     MAIN LOOP	    ;
@@ -174,11 +176,18 @@ distance_interrupt:
     turn_on_green:
         SBI GREEN_LED_PORT, GREEN_LED ; Set bit
     
+    LDS R16, Z
+    INC R16
+    STS Z, R16
+    
     RETI
     
 finish_line_interrupt:
     ; Stop motor and turn on the red LED for 1 sec
     PUSH R16
+    PUSH R17
+    
+    IN R17, OCR2
     
     LDI R16, 0
     OUT OCR2, R16
@@ -189,9 +198,19 @@ finish_line_interrupt:
     
     CBI RED_LED_PORT, RED_LED
     
-    LDI R16, DEFAULT_MOTORSPEED
+    LDI R16, 2
+    ADD R16, R17
     OUT OCR2, R16
     
+    ;LDI R16, DEFAULT_MOTORSPEED
+    ;OUT OCR2, R16
+    
+    LDS R16, Z
+    RCALL Transmit
+    LDI R16, 0
+    STS Z, R16
+    
+    POP R17
     POP R16
        
     RETI
