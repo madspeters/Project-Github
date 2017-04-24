@@ -32,7 +32,7 @@
 .EQU MOTOR_PORT = PORTD
 .EQU MOTOR = PIND7
 
-.EQU DEFAULT_MOTORSPEED = 0
+.EQU DEFAULT_MOTORSPEED = 125
 
 .MACRO SSP
 	LDI @0, low(@1)
@@ -114,7 +114,7 @@ reset:
     ; Enable interrupts
 	LDI R16, (1<<INT0)|(1<<INT1) ; Enable INT0 and INT1
 	OUT GICR, R16
-	LDI R16, (1<<ISC00)|(1<<ISC10) ; Set INT0 and INT1 to trigger on any logical change
+	LDI R16, (1<<ISC01)|(1<<ISC11) ; Set INT0 and INT1 to trigger on falling edge
 	OUT MCUCR, R16
 	SEI ; Enable global interrupts
     
@@ -126,8 +126,9 @@ reset:
     LDI ZH, high(SRAM_START) ; hhv. R30 og R31, som tilsammen udgør et
                              ; særligt 16-bit pointer register
                              ; http://www.avr-asm-tutorial.net/avr_en/beginner/REGISTER.html
-	LDI R16, 0
-	STS Z, R16
+	
+	LDI R31, low(0)
+	LDI R30, high(0)
 
     ;-----------;              
     ; BLUETOOTH ;
@@ -140,20 +141,61 @@ reset:
 	LDI R16, 12		;1 MHz
 	OUT UBRRL, R16 
 	SBI UCSRA, U2X		;bruges til 1MHz baudrate
+	
+	;------------;
+	; Set up ADC ;
+	;------------;
+	;--------------------------------------------;
+	; REFS1 REFS0 ADLAR MUX4 MUX3 MUX2 MUX1 MUX0 ;
+    ;   7     6     5    4    3    2    1    0   ;
+    ;--------------------------------------------;
+	LDI R16, 0b00100000 ; AREF, left adjusted, ADC0, 
+						; 0b11100000 to use 2.56V reference (MÅ KUN
+						; BRUGES NÅR DER IKKE ER SPÆNDING PÅ AREF! Der
+						; skal tilgengæld være en afkoblingskondensator
+						; til GND)
+	OUT ADMUX, R16
+	
+	;---------------------------------------------;
+	; ADEN ADSC ADATE ADIF ADIE ADPS2 ADPS1 ADPS0 ;
+	;  7    6     5    4    3     2     1     0   ;
+	;---------------------------------------------;
+	LDI R16, 0b11100011 ; Enable, start conversion, auto-trigger, prescaler = 8
+	OUT ADCSRA, R16
+	
+	;-------------------;
+	; ADTS2 ADTS1 ADTS0 ;
+	;   7     6     5   ;
+	;-------------------;
+	LDI R16, 0b00000000 ; Set trigger-source to free running mode
+	OUT SFIOR, R16
 
 
 ;-------------------;
 ;     MAIN LOOP	    ;
 ;-------------------;
 main:
+	CPI R5, 0
+	BREQ main
+	
+	IN R17, ADCH
+	RCALL TRANSMIT
+    
+    LDI R24, low(250)
+	LDI R25, high(250)
+    wait_loop: ; Vent 1 ms	
+		SBIW R25:R24, 1
+		BRNE wait_loop
+	
+	RJMP main
     
     ; Jespers bluetooth kode -------------------------------------------
-	RCALL Receive				;Modtag Byte1
-	CPI R17, 0x55
-	BREQ set1					;Branch hvis det var en SET kommand
-	CPI R17, 0xAA
-	BREQ get1					;Branch hvis det er en GET kommand
-	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
+	;RCALL Receive				;Modtag Byte1
+	;CPI R17, 0x55
+	;BREQ set1					;Branch hvis det var en SET kommand
+	;CPI R17, 0xAA
+	;BREQ get1					;Branch hvis det er en GET kommand
+	;RJMP main					;Loop hvis det var en fejl eller intet er modtaget
 
     set1: ;SET----------------------------------------------------------
         RCALL Receive
@@ -162,13 +204,14 @@ main:
         CPI R17, 0x11
         BREQ set1_stop2
         CPI R17, 0x12
-        ;BREQ set1_auto2
+        BREQ set1_auto2
         RJMP set1					;Loop hvis intet er modtaget
 
     get1: ;-------------------------------------------------------------
         
         RJMP main
-        
+    
+    RJMP main   
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
@@ -196,7 +239,8 @@ delay_1sec:
 
 Receive:
 	SBIS UCSRA, RXC
-	RET
+	RJMP Receive
+	;RET
 	IN	R17, UDR
 	RET
     
@@ -235,6 +279,7 @@ set1_auto2:
 ; INTERRUPT SERVICE ROUTINES ;
 ;----------------------------;
 distance_interrupt:
+	ADIW R30, 1 ; Tæl op på tick counter wordet
     ; Toggle green LED on any logical change
     
     SBIS GREEN_LED_PORT, GREEN_LED ; If bit is clear, go to turn_on_green
@@ -246,9 +291,6 @@ distance_interrupt:
     turn_on_green:
         SBI GREEN_LED_PORT, GREEN_LED ; Set bit
     
-    LDS R16, Z
-    INC R16
-    STS Z, R16
     
     RETI
     
@@ -259,29 +301,45 @@ finish_line_interrupt:
     
     IN R17, OCR2
     
-    LDI R16, 0
-    OUT OCR2, R16
+    ;LDI R16, 0
+    ;OUT OCR2, R16
     
     SBI RED_LED_PORT, RED_LED
     
-    RCALL delay_1sec
+    ;RCALL delay_1sec
     
-    CBI RED_LED_PORT, RED_LED
+    ;CBI RED_LED_PORT, RED_LED
     
-    LDI R16, 2
-    ADD R16, R17
-    OUT OCR2, R16
-    
-    ;LDI R16, DEFAULT_MOTORSPEED
+    ;LDI R16, 2 ; Increase motor speed by 2
+    ;ADD R16, R17
     ;OUT OCR2, R16
+
+	; Send number of motor ticks via bluetooth
+    ;MOV R17, R31
+    ;RCALL TRANSMIT
+    ;MOV R17, R30
+    ;RCALL TRANSMIT
     
-    LDS R16, Z
-    RCALL Transmit
-    LDI R16, 0
-    STS Z, R16
+    ; Reset tick counter
+    LDI R31, low(0)
+    LDI R30, high(0)
+    
+    
+    ; Set logger active
+    MOV R16, R5
+    CPI R16, 1
+    BREQ set_zero
+    LDI R16, 1
+    MOV R5, R16
+    
+	set_zero:
+		LDI R16, 0
+		MOV R5, R16
+    
     
     POP R17
     POP R16
+    
        
     RETI
 
