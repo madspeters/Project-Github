@@ -10,7 +10,7 @@
 
 .EQU GREEN_LED_DDR = DDRB
 .EQU GREEN_LED_PORT = PORTB
-.EQU GREEN_LED = PINB2 ; Move this to PINB3 (OC0) for timer interrupt
+.EQU GREEN_LED = PINB2
 
 .EQU STRAIN_GAUGE_DDR = DDRA
 .EQU STRAIN_GAUGE_PIN = PINA
@@ -32,7 +32,7 @@
 .EQU MOTOR_PORT = PORTD
 .EQU MOTOR = PIND7
 
-.EQU DEFAULT_MOTORSPEED = 125
+.EQU DEFAULT_MOTORSPEED = 90
 
 .MACRO SSP
 	LDI @0, low(@1)
@@ -52,10 +52,6 @@ RJMP distance_interrupt ; (INT0, PD2)
 
 .ORG 0x04
 RJMP finish_line_interrupt ; (INT1, PD3)
-
-;.org 0x16 ; TIMER0 overflow interrupt
-;RJMP timer0_overflow
-
 ;-------------------;
 ;       SETUP	    ;
 ;-------------------;
@@ -107,7 +103,7 @@ reset:
                   ; the value in OCR2 matches the value in the
                   ; timer/counter register (TCNT2)
     
-    ;------------;
+	;------------;
     ; INTERRUPTS ;
     ;------------;
     
@@ -117,8 +113,8 @@ reset:
 	LDI R16, (1<<ISC01)|(1<<ISC11) ; Set INT0 and INT1 to trigger on falling edge
 	OUT MCUCR, R16
 	SEI ; Enable global interrupts
-    
-    ;--------------------;
+
+	;--------------------;
     ; SRAM START POINTER ;
     ;--------------------;
     
@@ -126,10 +122,6 @@ reset:
     LDI ZH, high(SRAM_START) ; hhv. R30 og R31, som tilsammen udgør et
                              ; særligt 16-bit pointer register
                              ; http://www.avr-asm-tutorial.net/avr_en/beginner/REGISTER.html
-	
-	LDI R31, low(0)
-	LDI R30, high(0)
-
     ;-----------;              
     ; BLUETOOTH ;
     ;-----------;
@@ -141,8 +133,10 @@ reset:
 	LDI R16, 12		;1 MHz
 	OUT UBRRL, R16 
 	SBI UCSRA, U2X		;bruges til 1MHz baudrate
-	
-	;------------;
+
+
+
+		;------------;
 	; Set up ADC ;
 	;------------;
 	;--------------------------------------------;
@@ -171,47 +165,103 @@ reset:
 	OUT SFIOR, R16
 
 
+
 ;-------------------;
 ;     MAIN LOOP	    ;
 ;-------------------;
 main:
-	CPI R5, 0
-	BREQ main
-	
-	IN R17, ADCH
-	RCALL TRANSMIT
-    
-    LDI R24, low(250)
-	LDI R25, high(250)
-    wait_loop: ; Vent 1 ms	
-		SBIW R25:R24, 1
-		BRNE wait_loop
-	
-	RJMP main
     
     ; Jespers bluetooth kode -------------------------------------------
-	;RCALL Receive				;Modtag Byte1
-	;CPI R17, 0x55
-	;BREQ set1					;Branch hvis det var en SET kommand
-	;CPI R17, 0xAA
-	;BREQ get1					;Branch hvis det er en GET kommand
-	;RJMP main					;Loop hvis det var en fejl eller intet er modtaget
+	RCALL Receive				;Modtag Byte1
+	CPI R17, 0x55
+	BREQ set1					;Branch hvis det var en SET kommand
+	CPI R17, 0xAA
+	BREQ get1					;Branch hvis det er en GET kommand
+	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
 
     set1: ;SET----------------------------------------------------------
-        RCALL Receive
+        RCALL Receive			;Modtag Byte2
         CPI R17, 0x10
-        BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
+        BREQ set1_hastighed2	;Branch hvis det er en set1_hastighed2 kommand
         CPI R17, 0x11
-        BREQ set1_stop2
+        BREQ set1_stop2			;Branch hvis det er en set1_stop2 kommand
         CPI R17, 0x12
-        BREQ set1_auto2
-        RJMP set1					;Loop hvis intet er modtaget
+        BREQ set1_auto2			;Branch hvis det er en set1_auto2 kommand
+		CPI R17, 0x13
+        BREQ set1_blink2		;Brand hvis det er en set1_blink2 kommand
 
-    get1: ;-------------------------------------------------------------
-        
-        RJMP main
-    
-    RJMP main   
+        RJMP main				;Loop tilbage til main, hvis protokol var forkert
+
+    get1: ;GET-------------------------------------------------------------
+		RCALL Receive			;Modtag byte 2
+		CPI R17, 0x02			
+        BREQ get1_hastighed2	;Branch hvis det er en get1_hastighed2 kommand
+		CPI R17, 0x03
+        BREQ get1_position2		;Branch hvis det er en get1_position2 kommand
+		CPI R17, 0x05
+        BREQ get1_straingauge2	;Branch hvis det er en get1_straingauge2 kommand
+		CPI R17, 0x06
+        BREQ get1_positionssensor2;Branch hvis det er en get1_positionsensor2 kommand
+		CPI R17, 0x07
+        BREQ get1_maalstregssensor2;Branch hvis det er en get_1maalstregssensor2 kommand
+
+        RJMP main				;Loop tilbage til main, hvis protokol var forkert
+   
+		;SET2-----------------------------------------------------------------------
+		set1_hastighed2:
+			RCALL Receive		;Modtag byte3
+			MOV R2, R17			;Flyt modtaget byte over i R2
+			OUT OCR2, R2		;Output R2 til OCR2
+			RJMP main			;Loop tilbage til main
+
+		set1_stop2:				;Se eksempel set1_hastighed2
+			LDI R17, 0			
+			MOV R2, R17
+			OUT OCR2, R2
+			RJMP main
+		
+		set1_auto2:				;Se eksempel set1_hastighed2
+			LDI R17, 120		;Midlertidig værdi - denne værdi skal starte automode
+			MOV R2, R17
+			OUT OCR2, R2
+			RJMP main
+
+		set1_blink2:			;Se eksempel set1_hastighed2
+			RCALL Receive		
+			MOV R8, R17
+			;Kode der sender R8 ud til en blink
+			RJMP main ;der mangler kode til blink
+
+		;GET2-----------------------------------------------------------------------
+
+        get1_hastighed2:
+		MOV R17, R2				;Flyt R2 (hastighed) over til R17 
+		RCALL Transmit			;R17 sendes via bluetooth
+		RJMP main				;Loop til main
+
+        get1_position2:			;Se eksempel get1_position2
+		MOV R17, R3
+		RCALL Transmit
+		MOV R17, R4
+		RCALL transmit
+		RJMP main
+
+        get1_straingauge2:		;Se eksempel get1_position2
+		MOV R17, R5
+		RCALL Transmit
+		RJMP main
+
+        get1_positionssensor2:	;Se eksempel get1_position2
+		MOV R17, R6
+		RCALL Transmit
+		RJMP main
+
+        get1_maalstregssensor2:	
+		MOV R17, R7
+		RCALL Transmit
+		RJMP main
+
+
 ;-------------------;
 ;   SUB-ROUTINES 	;
 ;-------------------;
@@ -240,7 +290,6 @@ delay_1sec:
 Receive:
 	SBIS UCSRA, RXC
 	RJMP Receive
-	;RET
 	IN	R17, UDR
 	RET
     
@@ -249,97 +298,49 @@ Transmit:
     RJMP Transmit		;if not, wait some more
     OUT  UDR, R17		;Send R17 to UDR
     RET
-    
-set1_hastighed2:
-	RCALL Receive
-	MOV R2, R17
-	OUT OCR2, R2
 
-	RJMP main
-
-set1_stop2:
-	RCALL Receive
-	LDI R17, 0
-	MOV R3, R17
-	
-	OUT OCR2, R3
-	
-	RJMP main
-	
-set1_auto2:
-	RCALL Receive
-	LDI R17, 120
-	MOV R4, R17
-	
-	OUT OCR2, R4
-	
-	RJMP main
 
 ;----------------------------;
 ; INTERRUPT SERVICE ROUTINES ;
 ;----------------------------;
 distance_interrupt:
-	ADIW R30, 1 ; Tæl op på tick counter wordet
-    ; Toggle green LED on any logical change
-    
-    SBIS GREEN_LED_PORT, GREEN_LED ; If bit is clear, go to turn_on_green
-    RJMP turn_on_green
-    
-    CBI GREEN_LED_PORT, GREEN_LED ; If bit is set, clear it and return
-    RETI
-    
-    turn_on_green:
-        SBI GREEN_LED_PORT, GREEN_LED ; Set bit
-    
-    
+	PUSH R16
+   	PUSH R17
+	
+	INC R4				;Incrementer position(LOW)
+	SBRC SREG, 1		;Hvis zeroflag er = 1, så udføres næste linje
+	INC R3				;Incrementer position(HIGH)
+
+	IN R16, ADCH		;aflæs straingauge
+	CPI R16, 0xF0		;Sammenlign med en konstant værdi - V_th
+	BRSH detekt_sving			;BRSH - Branch if Same or Higher (Unsigned)
+	
+	POP R17
+	POP R16
+	RETI
+
+detekt_sving:
+	ldi R16, 0x00		;antal tikz som vi måler forkert
+	LDI R17, 0x00		; R16:R17
+	
+	SUB R4, R17			;R3:R4 - R16:R17
+	SBC	R3, R16
+
+	st Z+, R3			;Gem position(HIGH) og incrementer pointer
+	st Z+, R4			;Gem position(LOW)	og incrementer pointer
+						;Pointeren vil allerede være incrementeret til vi får et nyt interrupt
+
+	POP R17
+	POP R16
     RETI
     
 finish_line_interrupt:
-    ; Stop motor and turn on the red LED for 1 sec
-    PUSH R16
-    PUSH R17
+	PUSH R16
     
-    IN R17, OCR2
-    
-    ;LDI R16, 0
-    ;OUT OCR2, R16
-    
-    SBI RED_LED_PORT, RED_LED
-    
-    ;RCALL delay_1sec
-    
-    ;CBI RED_LED_PORT, RED_LED
-    
-    ;LDI R16, 2 ; Increase motor speed by 2
-    ;ADD R16, R17
-    ;OUT OCR2, R16
+	INC R9				;Incrementer antal omgange
+	LDI R16, 0x00		
+	MOV R3, R16			;Nulstil positionsensor(HIGH)
+	MOV R4, R16			;Nulstil positionsensor(LOW)
 
-	; Send number of motor ticks via bluetooth
-    ;MOV R17, R31
-    ;RCALL TRANSMIT
-    ;MOV R17, R30
-    ;RCALL TRANSMIT
-    
-    ; Reset tick counter
-    LDI R31, low(0)
-    LDI R30, high(0)
-    
-    
-    ; Set logger active
-    MOV R16, R5
-    CPI R16, 1
-    BREQ set_zero
-    LDI R16, 1
-    MOV R5, R16
-    
-	set_zero:
-		LDI R16, 0
-		MOV R5, R16
-    
-    
-    POP R17
-    POP R16
-    
-       
+	POP R16
     RETI
-
