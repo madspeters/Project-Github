@@ -124,54 +124,54 @@ main:
 	RJMP main					;Loop hvis det var en fejl eller intet er modtaget
 
     set1: ;SET----------------------------------------------------------
-        RCALL Receive
+        RCALL Receive			;Modtag Byte2
         CPI R17, 0x10
-        BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
+        BREQ set1_hastighed2	;Branch hvis det er en set1_hastighed2 kommand
         CPI R17, 0x11
-        BREQ set1_stop2
+        BREQ set1_stop2			;Branch hvis det er en set1_stop2 kommand
         CPI R17, 0x12
-        BREQ set1_auto2
+        BREQ set1_auto2			;Branch hvis det er en set1_auto2 kommand
 		CPI R17, 0x13
-        BREQ set1_blink2
+        BREQ set1_blink2		;Brand hvis det er en set1_blink2 kommand
 
-        RJMP main					;Loop hvis intet er modtaget
+        RJMP main				;Loop tilbage til main, hvis protokol var forkert
 
     get1: ;GET-------------------------------------------------------------
-		RCALL Receive
-		CPI R17, 0x02
-        BREQ get1_hastighed2
+		RCALL Receive			;Modtag byte 2
+		CPI R17, 0x02			
+        BREQ get1_hastighed2	;Branch hvis det er en get1_hastighed2 kommand
 		CPI R17, 0x03
-        BREQ get1_position2
+        BREQ get1_position2		;Branch hvis det er en get1_position2 kommand
 		CPI R17, 0x05
-        BREQ get1_straingauge2
+        BREQ get1_straingauge2	;Branch hvis det er en get1_straingauge2 kommand
 		CPI R17, 0x06
-        BREQ get1_positionsensor2
+        BREQ get1_positionssensor2;Branch hvis det er en get1_positionsensor2 kommand
 		CPI R17, 0x07
-        BREQ get1_maalstregssensor2
+        BREQ get1_maalstregssensor2;Branch hvis det er en get_1maalstregssensor2 kommand
 
-        RJMP main
+        RJMP main				;Loop tilbage til main, hvis protokol var forkert
    
 		;SET2-----------------------------------------------------------------------
 		set1_hastighed2:
-			RCALL Receive
-			MOV R2, R17
-			OUT OCR2, R2
-			RJMP main
+			RCALL Receive		;Modtag byte3
+			MOV R2, R17			;Flyt modtaget byte over i R2
+			OUT OCR2, R2		;Output R2 til OCR2
+			RJMP main			;Loop tilbage til main
 
-		set1_stop2:
-			LDI R17, 0
+		set1_stop2:				;Se eksempel set1_hastighed2
+			LDI R17, 0			
 			MOV R2, R17
 			OUT OCR2, R2
 			RJMP main
 		
-		set1_auto2:
-			LDI R17, 120
+		set1_auto2:				;Se eksempel set1_hastighed2
+			LDI R17, 120		;Midlertidig værdi - denne værdi skal starte automode
 			MOV R2, R17
 			OUT OCR2, R2
 			RJMP main
 
-		set1_blink2:
-			RCALL Receive
+		set1_blink2:			;Se eksempel set1_hastighed2
+			RCALL Receive		
 			MOV R8, R17
 			;Kode der sender R8 ud til en blink
 			RJMP main ;der mangler kode til blink
@@ -179,28 +179,28 @@ main:
 		;GET2-----------------------------------------------------------------------
 
         get1_hastighed2:
-		MOV R17, R2
-		RCALL Transmit
-		RJMP main
+		MOV R17, R2				;Flyt R2 (hastighed) over til R17 
+		RCALL Transmit			;R17 sendes via bluetooth
+		RJMP main				;Loop til main
 
-        get1_position2:
+        get1_position2:			;Se eksempel get1_position2
 		MOV R17, R3
 		RCALL Transmit
 		MOV R17, R4
 		RCALL transmit
 		RJMP main
 
-        get1_straingauge2:
+        get1_straingauge2:		;Se eksempel get1_position2
 		MOV R17, R5
 		RCALL Transmit
 		RJMP main
 
-        get1_positionsensor2:
+        get1_positionssensor2:	;Se eksempel get1_position2
 		MOV R17, R6
 		RCALL Transmit
 		RJMP main
 
-        get1_maalstregssensor2:
+        get1_maalstregssensor2:	;Se eksempel get1_position2
 		MOV R17, R7
 		RCALL Transmit
 		RJMP main
@@ -231,12 +231,6 @@ delay_1sec:
     
 	RET
 
-;Receive:
-;	SBIS UCSRA, RXC
-;	RET
-;	IN	R17, UDR
-;	RET
-
 Receive:
 	SBIS UCSRA, RXC
 	RJMP Receive
@@ -248,6 +242,3 @@ Transmit:
     RJMP Transmit		;if not, wait some more
     OUT  UDR, R17		;Send R17 to UDR
     RET
-    
-
-
