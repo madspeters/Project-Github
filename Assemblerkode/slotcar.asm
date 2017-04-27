@@ -210,20 +210,20 @@ main:
 		;SET2-----------------------------------------------------------------------
 		set1_hastighed2:
 			RCALL Receive		;Modtag byte3
-			MOV R2, R17			;Flyt modtaget byte over i R2
-			OUT OCR2, R2		;Output R2 til OCR2
+			MOV R8, R17			;Flyt modtaget byte over i R2
+			OUT OCR2, R8		;Output R2 til OCR2
 			RJMP main			;Loop tilbage til main
 
 		set1_stop2:				;Se eksempel set1_hastighed2
 			LDI R17, 0			
-			MOV R2, R17
-			OUT OCR2, R2
+			MOV R8, R17
+			OUT OCR2, R8
 			RJMP main
 		
 		set1_auto2:				;Se eksempel set1_hastighed2
 			LDI R17, 120		;Midlertidig værdi - denne værdi skal starte automode
-			MOV R2, R17
-			OUT OCR2, R2
+			MOV R8, R17
+			OUT OCR2, R8
 			RJMP main
 
 		set1_blink2:			;Se eksempel set1_hastighed2
@@ -235,29 +235,29 @@ main:
 		;GET2-----------------------------------------------------------------------
 
         get1_hastighed2:
-		MOV R17, R2				;Flyt R2 (hastighed) over til R17 
+		MOV R17, R8				;Flyt R2 (hastighed) over til R17 
 		RCALL Transmit			;R17 sendes via bluetooth
 		RJMP main				;Loop til main
 
         get1_position2:			;Se eksempel get1_position2
-		MOV R17, R3
+		MOV R17, R10		;position(HIGH)
 		RCALL Transmit
-		MOV R17, R4
+		MOV R17, R9		;position(LOW)
 		RCALL transmit
 		RJMP main
 
         get1_straingauge2:		;Se eksempel get1_position2
-		MOV R17, R5
+		MOV R17, R11
 		RCALL Transmit
 		RJMP main
 
         get1_positionssensor2:	;Se eksempel get1_position2
-		MOV R17, R6
+		MOV R17, R12
 		RCALL Transmit
 		RJMP main
 
         get1_maalstregssensor2:	
-		MOV R17, R7
+		MOV R17, R13
 		RCALL Transmit
 		RJMP main
 
@@ -307,9 +307,7 @@ distance_interrupt:
 	PUSH R16
    	PUSH R17
 	
-	INC R4				;Incrementer position(LOW)
-	SBRC SREG, 1		;Hvis zeroflag er = 1, så udføres næste linje
-	INC R3				;Incrementer position(HIGH)
+	ADIW R10:R9, 1		;Inkrementer position
 
 	IN R16, ADCH		;aflæs straingauge
 	CPI R16, 0xF0		;Sammenlign med en konstant værdi - V_th
@@ -321,13 +319,13 @@ distance_interrupt:
 
 detekt_sving:
 	ldi R16, 0x00		;antal tikz som vi måler forkert
-	LDI R17, 0x00		; R16:R17
+	LDI R17, 0x00		; R17:R16
 	
-	SUB R4, R17			;R3:R4 - R16:R17
-	SBC	R3, R16
+	SUB R9, R17			;R9:R10 - R17:R16
+	SBC R10, R16
 
-	st Z+, R3			;Gem position(HIGH) og incrementer pointer
-	st Z+, R4			;Gem position(LOW)	og incrementer pointer
+	st Z+, R9			;Gem position(HIGH) og incrementer pointer
+	st Z+, R10			;Gem position(LOW)	og incrementer pointer
 						;Pointeren vil allerede være incrementeret til vi får et nyt interrupt
 
 	POP R17
@@ -337,10 +335,10 @@ detekt_sving:
 finish_line_interrupt:
 	PUSH R16
     
-	INC R9				;Incrementer antal omgange
+	INC R15				;Incrementer antal omgange
 	LDI R16, 0x00		
-	MOV R3, R16			;Nulstil positionsensor(HIGH)
-	MOV R4, R16			;Nulstil positionsensor(LOW)
+	MOV R10, R16			;Nulstil positionsensor(HIGH)
+	MOV R9, R16			;Nulstil positionsensor(LOW)
 
 	POP R16
     RETI
