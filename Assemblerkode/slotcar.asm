@@ -6,11 +6,11 @@
 ;-------------------;
 .EQU RED_LED_DDR = DDRB
 .EQU RED_LED_PORT = PORTB
-.EQU RED_LED = PINB1
+.EQU RED_LED = PINB4
 
 .EQU GREEN_LED_DDR = DDRB
 .EQU GREEN_LED_PORT = PORTB
-.EQU GREEN_LED = PINB2 ; Move this to PINB3 (OC0) for timer interrupt
+.EQU GREEN_LED = PINB3 ; Move this to PINB3 (OC0) for timer interrupt
 
 .EQU STRAIN_GAUGE_DDR = DDRA
 .EQU STRAIN_GAUGE_PIN = PINA
@@ -20,12 +20,12 @@
 .EQU FINISH_LINE_DDR = DDRD
 .EQU FINISH_LINE_PIN = PIND
 .EQU FINISH_LINE_PORT = PORTD
-.EQU FINISH_LINE = PIND3
+.EQU FINISH_LINE = PIND2
 
 .EQU DISTANCE_DDR = DDRD
 .EQU DISTANCE_PIN = PIND
 .EQU DISTANCE_PORT = PORTD
-.EQU DISTANCE = PIND2
+.EQU DISTANCE = PIND3
 
 .EQU MOTOR_DDR = DDRD
 .EQU MOTOR_PIN = PIND
@@ -48,10 +48,10 @@
 RJMP reset
 
 .ORG 0x02
-RJMP distance_interrupt ; (INT0, PD2)
+RJMP finish_line_interrupt; (INT0, PD2)
 
 .ORG 0x04
-RJMP finish_line_interrupt ; (INT1, PD3)
+RJMP distance_interrupt ; (INT1, PD3)
 
 ;.org 0x16 ; TIMER0 overflow interrupt
 ;RJMP timer0_overflow
@@ -127,9 +127,6 @@ reset:
                              ; særligt 16-bit pointer register
                              ; http://www.avr-asm-tutorial.net/avr_en/beginner/REGISTER.html
 	
-	LDI R31, low(0)
-	LDI R30, high(0)
-
     ;-----------;              
     ; BLUETOOTH ;
     ;-----------;
@@ -169,47 +166,28 @@ reset:
 	;-------------------;
 	LDI R16, 0b00000000 ; Set trigger-source to free running mode
 	OUT SFIOR, R16
-
+	
+	; Use R23 for finish line counter and R25:R24 for tick counter
+	LDI R23, 0
+	LDI R24, 0
+	LDI R25, 0
 
 ;-------------------;
 ;     MAIN LOOP	    ;
 ;-------------------;
-main:
-	CPI R5, 0
-	BREQ main
-	
-	IN R17, ADCH
-	RCALL TRANSMIT
+main:	
+	;---------------------------;
+	; Læs ADC hvert millisekund ;
+	;---------------------------;
+	;IN R17, ADCH
+	;RCALL TRANSMIT
     
-    LDI R24, low(250)
-	LDI R25, high(250)
-    wait_loop: ; Vent 1 ms	
-		SBIW R25:R24, 1
-		BRNE wait_loop
-	
-	RJMP main
-    
-    ; Jespers bluetooth kode -------------------------------------------
-	;RCALL Receive				;Modtag Byte1
-	;CPI R17, 0x55
-	;BREQ set1					;Branch hvis det var en SET kommand
-	;CPI R17, 0xAA
-	;BREQ get1					;Branch hvis det er en GET kommand
-	;RJMP main					;Loop hvis det var en fejl eller intet er modtaget
-
-    set1: ;SET----------------------------------------------------------
-        RCALL Receive
-        CPI R17, 0x10
-        BREQ set1_hastighed2		;Branch hvis det er en set1_hastighed2 kommand
-        CPI R17, 0x11
-        BREQ set1_stop2
-        CPI R17, 0x12
-        BREQ set1_auto2
-        RJMP set1					;Loop hvis intet er modtaget
-
-    get1: ;-------------------------------------------------------------
-        
-        RJMP main
+    ; Delay
+    ;LDI R24, low(250)
+	;LDI R25, high(250)
+    ;wait_loop: ; Vent 1 ms	
+	;	SBIW R25:R24, 1
+	;	BRNE wait_loop
     
     RJMP main   
 ;-------------------;
@@ -279,67 +257,71 @@ set1_auto2:
 ; INTERRUPT SERVICE ROUTINES ;
 ;----------------------------;
 distance_interrupt:
-	ADIW R30, 1 ; Tæl op på tick counter wordet
-    ; Toggle green LED on any logical change
-    
-    SBIS GREEN_LED_PORT, GREEN_LED ; If bit is clear, go to turn_on_green
-    RJMP turn_on_green
-    
-    CBI GREEN_LED_PORT, GREEN_LED ; If bit is set, clear it and return
-    RETI
-    
-    turn_on_green:
-        SBI GREEN_LED_PORT, GREEN_LED ; Set bit
-    
-    
-    RETI
-    
-finish_line_interrupt:
-    ; Stop motor and turn on the red LED for 1 sec
-    PUSH R16
+	;------------------;
+	; Toggle green led ;
+	;------------------;
+	PUSH R16
     PUSH R17
     
-    IN R17, OCR2
+    IN R16, GREEN_LED_PORT
+    LDI R17, (1 << GREEN_LED) ; Bit mask
     
-    ;LDI R16, 0
-    ;OUT OCR2, R16
+    EOR R16, R17 ; Toggles green led pin, the rest stay the same
+    OUT GREEN_LED_PORT, R16
     
-    SBI RED_LED_PORT, RED_LED
+    ADIW R25:R24, 1 ; Increment tick counter
     
-    ;RCALL delay_1sec
-    
-    ;CBI RED_LED_PORT, RED_LED
-    
-    ;LDI R16, 2 ; Increase motor speed by 2
-    ;ADD R16, R17
-    ;OUT OCR2, R16
-
-	; Send number of motor ticks via bluetooth
-    ;MOV R17, R31
-    ;RCALL TRANSMIT
-    ;MOV R17, R30
-    ;RCALL TRANSMIT
-    
-    ; Reset tick counter
-    LDI R31, low(0)
-    LDI R30, high(0)
-    
-    
-    ; Set logger active
-    MOV R16, R5
-    CPI R16, 1
-    BREQ set_zero
-    LDI R16, 1
-    MOV R5, R16
-    
-	set_zero:
-		LDI R16, 0
-		MOV R5, R16
-    
+    ; Send tick
+    MOV R17, R25
+    RCALL Transmit
+    MOV R17, R24
+    RCALL Transmit
     
     POP R17
     POP R16
     
-       
+    RETI
+    
+finish_line_interrupt:
+    ; Toggle red led and send counters to bluetooth
+    PUSH R16
+    PUSH R17
+    PUSH R26
+    PUSH R27
+    
+    ; Wait for 2 ms and check sensor again
+    ;LDI R26, low(750)
+    ;LDI R27, high(750)
+    ;loop_again:
+	;	SBIW R27:R26, 1
+	; BRNE loop_again
+	
+	SBIC FINISH_LINE_PIN, FINISH_LINE
+	RETI ; Return interrupt if bit is set (finish line not detected)
+    
+    ; Toggle red led
+    IN R16, RED_LED_PORT
+    LDI R17, (1 << RED_LED) ; Bit mask
+    EOR R16, R17 ; Toggles red led pin, the rest stay the same
+    OUT RED_LED_PORT, R16
+    
+    ; Send lap counter
+    INC R23 ; Increment counter
+    MOV R17, R23 ; Send counter via bluetooth
+    RCALL Transmit
+    
+    ; Send tick counter and reset
+    MOV R17, R25 ; Send high byte
+    RCALL Transmit
+    MOV R17, R24 ; Send low byte
+    RCALL Transmit
+    LDI R24, 0
+    LDI R25, 0
+    
+    POP R27
+    POP R26
+    POP R17
+    POP R16
+    
     RETI
 
